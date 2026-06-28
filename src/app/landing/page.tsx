@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import { Button } from "@/components/ui/button"
 export default function landingPage() {
   return (
     <div className="page-shell">
@@ -31,6 +31,9 @@ export default function landingPage() {
         <Link href="/create" className="btn-primary mt-8">
           Create your invoice for free
         </Link>
+        <Button>   <Link href="/create">
+          Create your invoice for free
+        </Link></Button>
       </div>
     </div>
   );
