@@ -1,21 +1,56 @@
 "use client";
 
-import InvoiceItemForm from "../components/InvoiceItemForm";
-import { useState } from "react";
+import React, { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useInvoice, type Item } from "../context/invoice-context";
-import React, { FormEvent } from "react";
+import { updateInvoice } from "@/app/actions/invoice";
+import InvoiceItemForm from "@/app/components/InvoiceItemForm";
+import type { Item } from "@/app/context/invoice-context";
 
-export default function createinvoice() {
-  const { setInvoice } = useInvoice();
+type InvoiceItem = {
+  name: string;
+  quantity: number;
+  price: number;
+};
+
+type EditInvoice = {
+  invoiceName: string;
+  invoiceNumber: string;
+  invoiceDate: Date | string;
+  customerName: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  tax: number;
+  discount: number;
+  note: string | null;
+  items: InvoiceItem[];
+};
+
+type EditInvoiceFormProps = {
+  invoice: EditInvoice;
+  id: string;
+};
+
+function formatDateForInput(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toISOString().slice(0, 10);
+}
+
+function mapItemsToState(items: InvoiceItem[]): Item[] {
+  if (items.length === 0) {
+    return [{ name: "", quantity: 1, price: 0 }];
+  }
+  return items.map((item) => ({
+    name: item.name,
+    quantity: item.quantity,
+    price: item.price,
+  }));
+}
+
+export default function EditInvoiceForm({ invoice, id }: EditInvoiceFormProps) {
   const router = useRouter();
-  const [items, setItems] = useState<Item[]>([
-    {
-      name: "",
-      quantity: 1,
-      price: 0,
-    },
-  ]);
+  const [items, setItems] = useState<Item[]>(() => mapItemsToState(invoice.items));
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function addItem() {
     setItems([...items, { name: "", quantity: 1, price: 0 }]);
@@ -33,35 +68,52 @@ export default function createinvoice() {
     );
   }
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
-    setInvoice({
-      invoiceName: String(data.invoiceName ?? ""),
-      invoiceId: String(data.invoiceId ?? ""),
-      invoiceDate: String(data.invoiceDate ?? ""),
-      customerName: String(data.customerName ?? ""),
-      customerEmail: String(data.customerEmail ?? ""),
-      customerPhone: String(data.customerPhone ?? ""),
-      items,
-      tax: Number(data.tax) || 0,
-      discount: Number(data.discount) || 0,
-      note: String(data.note ?? ""),
-    });
-    router.push("/preview");
+    setError(null);
+    setSaving(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const data = Object.fromEntries(formData);
+      const invoiceData = {
+        invoiceName: String(data.invoiceName ?? ""),
+        invoiceNumber: String(data.invoiceId ?? ""),
+        invoiceDate: String(data.invoiceDate ?? ""),
+        customerName: String(data.customerName ?? ""),
+        customerEmail: String(data.customerEmail ?? ""),
+        customerPhone: String(data.customerPhone ?? ""),
+        items,
+        tax: Number(data.tax) || 0,
+        discount: Number(data.discount) || 0,
+        note: String(data.note ?? ""),
+      };
+
+      await updateInvoice(id, invoiceData);
+      router.push(`/invoice/${id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save invoice");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="page-shell">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Create invoice
+          Edit invoice
         </h1>
         <p className="mt-2 text-gray-600">
-          Fill in the details below. You can preview before downloading.
+          Update the details below and save your changes.
         </p>
       </div>
+
+      {error && (
+        <p className="mb-4 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm text-gray-900">
+          {error}
+        </p>
+      )}
 
       <form onSubmit={onSubmit} className="space-y-6">
         <section className="card">
@@ -76,6 +128,7 @@ export default function createinvoice() {
                 className="input"
                 type="text"
                 name="invoiceName"
+                defaultValue={invoice.invoiceName}
                 placeholder="e.g. Website redesign"
                 required
               />
@@ -89,6 +142,7 @@ export default function createinvoice() {
                 className="input"
                 type="text"
                 name="invoiceId"
+                defaultValue={invoice.invoiceNumber}
                 placeholder="e.g. INV-001"
                 required
               />
@@ -102,6 +156,7 @@ export default function createinvoice() {
                 className="input"
                 type="date"
                 name="invoiceDate"
+                defaultValue={formatDateForInput(invoice.invoiceDate)}
                 required
               />
             </div>
@@ -120,6 +175,7 @@ export default function createinvoice() {
                 className="input"
                 type="text"
                 name="customerName"
+                defaultValue={invoice.customerName}
                 placeholder="Client or company name"
                 required
               />
@@ -133,6 +189,7 @@ export default function createinvoice() {
                 className="input"
                 type="email"
                 name="customerEmail"
+                defaultValue={invoice.customerEmail ?? ""}
                 placeholder="client@email.com"
               />
             </div>
@@ -143,8 +200,9 @@ export default function createinvoice() {
               <input
                 id="customerPhone"
                 className="input"
-                type="number"
+                type="text"
                 name="customerPhone"
+                defaultValue={invoice.customerPhone ?? ""}
                 placeholder="Phone number"
               />
             </div>
@@ -189,6 +247,7 @@ export default function createinvoice() {
                 className="input"
                 type="number"
                 name="tax"
+                defaultValue={invoice.tax}
                 placeholder="0"
                 min="0"
               />
@@ -202,6 +261,7 @@ export default function createinvoice() {
                 className="input"
                 type="number"
                 name="discount"
+                defaultValue={invoice.discount}
                 placeholder="0"
                 min="0"
               />
@@ -215,15 +275,23 @@ export default function createinvoice() {
                 className="input"
                 type="text"
                 name="note"
+                defaultValue={invoice.note ?? ""}
                 placeholder="Payment terms, thank you message, etc."
               />
             </div>
           </div>
         </section>
 
-        <div className="flex justify-end">
-          <button type="submit" className="btn-primary">
-            Preview invoice
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => router.push(`/invoice/${id}`)}
+          >
+            Cancel
+          </button>
+          <button type="submit" className="btn-primary" disabled={saving}>
+            {saving ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>
