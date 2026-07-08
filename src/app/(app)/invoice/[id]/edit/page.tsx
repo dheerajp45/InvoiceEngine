@@ -9,6 +9,7 @@ export default async function EditInvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -17,7 +18,7 @@ export default async function EditInvoicePage({
     redirect("/signin");
   }
 
-  const { id } = await params;
+  const { id } =await   params;
 
   const invoice = await prisma.invoice.findFirst({
     where: { userId: session.user.id, id },

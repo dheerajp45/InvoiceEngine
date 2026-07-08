@@ -4,7 +4,7 @@ import React, { FormEvent, useState } from "react";
 import Link from "next/link";
 import { authClient } from "../../../../lib/auth-client";
 import { useRouter } from "next/navigation";
-
+import GoogleButton from "@/app/components/GoogleButton";
 export default function SignInPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -79,6 +79,7 @@ export default function SignInPage() {
           <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
           </button>
+          <GoogleButton></GoogleButton>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">

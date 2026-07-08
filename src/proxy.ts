@@ -10,7 +10,8 @@ export function proxy(request: NextRequest) {
   const isProtected =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/create")||
-    pathname.startsWith("/invoice")
+    pathname.startsWith("/invoice")||
+    pathname.startsWith("/settings");
 
   if (isProtected && !sessionCookie) {
     return NextResponse.redirect(new URL("/signin", request.url))
@@ -20,7 +21,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/dashboard", "/dashboard/:path*", "/create", "/create/:path*","/invoice/:path","/invoice"    ],
+    matcher: ["/dashboard", "/dashboard/:path*", "/create", "/create/:path*","/invoice/:path","/invoice"  , "/settings"  ],
 }
 
 

@@ -5,11 +5,15 @@ import { notFound, redirect } from "next/navigation";
 import { deleteInvoice } from "@/app/actions/invoice";
 import Link from "next/link";
 import InvoiceDocument from "@/app/components/InvoiceDocument";
+import CopyShareLink from "@/app/components/CopyShareLink";
+import { sendInvoiceEmail } from "@/app/actions/email";
 
 export default async function InvoiceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ email?: string }>;
 }) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -20,6 +24,7 @@ export default async function InvoiceDetailPage({
   }
 
   const { id } = await params;
+  const { email: emailStatus } = await searchParams;
 
   const invoice = await prisma.invoice.findFirst({
     where: { userId: session.user.id, id },
@@ -30,6 +35,8 @@ export default async function InvoiceDetailPage({
     notFound();
   }
 
+  const appUrl = process.env.APP_URL;
+
   async function deletePresentInvoice(formData: FormData) {
     "use server";
     const invoiceId = formData.get("id") as string;
@@ -39,8 +46,30 @@ export default async function InvoiceDetailPage({
     }
   }
 
+  async function sendInvoiceEmailAction(formData: FormData) {
+    "use server";
+    const toEmail = formData.get("toEmail") as string;
+    try {
+      await sendInvoiceEmail(id, toEmail);
+      redirect(`/invoice/${id}?email=sent`);
+    } catch {
+      redirect(`/invoice/${id}?email=error`);
+    }
+  }
+
   return (
     <div className="page-shell">
+      {emailStatus === "sent" && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          Email sent successfully!
+        </div>
+      )}
+      {emailStatus === "error" && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          Failed to send email. Please try again.
+        </div>
+      )}
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -56,6 +85,18 @@ export default async function InvoiceDetailPage({
           </Link>
           <Link href={`/invoice/${id}/edit`} className="btn-secondary">
             Edit
+          </Link>
+          <a href={`/api/invoice/${id}/pdf`} className="btn-secondary">
+            Download PDF
+          </a>
+          <CopyShareLink publicId={invoice.publicId} appUrl={appUrl} />
+          <Link
+            href={`/share/${invoice.publicId}`}
+            className="btn-secondary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Preview public page
           </Link>
           <form action={deletePresentInvoice}>
             <input type="hidden" name="id" value={id} />
@@ -84,6 +125,29 @@ export default async function InvoiceDetailPage({
           })),
         }}
       />
+
+      <div className="card mt-6">
+        <h2 className="section-title">Send to client</h2>
+        <form action={sendInvoiceEmailAction} className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[220px] flex-1">
+            <label htmlFor="toEmail" className="field-label">
+              Client email
+            </label>
+            <input
+              id="toEmail"
+              type="email"
+              name="toEmail"
+              defaultValue={invoice.customerEmail ?? ""}
+              required
+              className="input"
+              placeholder="client@example.com"
+            />
+          </div>
+          <button type="submit" className="btn-primary">
+            Send invoice link
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

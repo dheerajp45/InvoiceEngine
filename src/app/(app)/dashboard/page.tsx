@@ -5,7 +5,14 @@ import { prisma } from "../../../../lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDisplayDate } from "@/app/components/InvoiceDocument";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const searchQuery = q?.trim() ?? "";
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -13,14 +20,23 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/signin");
 
   const invoices = await prisma.invoice.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      ...(searchQuery
+        ? {
+            OR: [
+              { invoiceName: { contains: searchQuery, mode: "insensitive" } },
+              { customerName: { contains: searchQuery, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
-    include: { items: true },
   });
 
   return (
     <div className="page-shell">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
             Your invoices
@@ -29,20 +45,57 @@ export default async function DashboardPage() {
             Manage and view all your saved invoices.
           </p>
         </div>
-        <Link href="/create" className="btn-primary">
-          + New invoice
-        </Link>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <form method="GET" className="flex w-full items-center gap-2 sm:w-auto">
+            <input
+              type="text"
+              name="q"
+              defaultValue={searchQuery}
+              placeholder="Search by invoice or customer..."
+              className="input min-w-0 flex-1 sm:w-56"
+            />
+            <button type="submit" className="btn-secondary shrink-0">
+              Search
+            </button>
+            {searchQuery ? (
+              <Link href="/dashboard" className="btn-ghost shrink-0">
+                Clear
+              </Link>
+            ) : null}
+          </form>
+          <Link href="/create" className="btn-primary shrink-0 text-center">
+            + New invoice
+          </Link>
+        </div>
       </div>
 
       {invoices.length === 0 ? (
         <div className="card mx-auto max-w-lg text-center">
-          <h2 className="text-lg font-semibold text-gray-900">No invoices yet</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Create your first invoice to get started.
-          </p>
-          <Link href="/create" className="btn-primary mt-6">
-            Create invoice
-          </Link>
+          {searchQuery ? (
+            <>
+              <h2 className="text-lg font-semibold text-gray-900">
+                No results for &ldquo;{searchQuery}&rdquo;
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                Try a different search term or clear the filter.
+              </p>
+              <Link href="/dashboard" className="btn-secondary mt-6">
+                Clear search
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-semibold text-gray-900">
+                No invoices yet
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                Create your first invoice to get started.
+              </p>
+              <Link href="/create" className="btn-primary mt-6">
+                Create invoice
+              </Link>
+            </>
+          )}
         </div>
       ) : (
         <div className="card overflow-hidden p-0">
