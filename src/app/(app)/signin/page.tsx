@@ -28,6 +28,11 @@ export default function SignInPage() {
         onError: (ctx) => {
           setError(ctx.error.message);
           setLoading(false);
+
+          const msg = ctx.error.message.toLowerCase();
+          if (msg.includes("verify") || msg.includes("verified")) {
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+          }
         },
       }
     );

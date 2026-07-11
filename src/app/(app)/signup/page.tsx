@@ -24,8 +24,7 @@ export default function SignUpPage() {
       { email, password, name },
       {
         onSuccess: () => {
-          router.push("/signin");
-        },
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`);        },
         onError: (ctx) => {
           setError(ctx.error.message);
           setLoading(false);
