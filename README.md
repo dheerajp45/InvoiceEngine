@@ -1,6 +1,6 @@
 # Invoice Engine
 
-A modern invoice SaaS built as a hands-on Next.js learning project. Create professional invoices, save them securely, download PDFs, and share public links with clients.
+A modern invoice  built as a hands-on Next.js learning project. Create professional invoices, save them securely, download PDFs, and share public links with clients.
 
 Every invoice belongs to an authenticated user. This is a document-creation tool—not accounting or payment tracking.
 
