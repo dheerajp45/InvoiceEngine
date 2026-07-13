@@ -65,10 +65,10 @@ export default async function InvoiceDetailPage({
     const toEmail = formData.get("toEmail") as string;
     try {
       await sendInvoiceEmail(id, toEmail);
-      redirect(`/invoice/${id}?email=sent`);
     } catch {
       redirect(`/invoice/${id}?email=error`);
     }
+    redirect(`/invoice/${id}?email=sent`);
   }
 
   return (
