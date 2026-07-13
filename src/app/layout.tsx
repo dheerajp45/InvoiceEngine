@@ -3,6 +3,7 @@ import "./globals.css";
 import { Figtree } from "next/font/google";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -19,6 +20,7 @@ export default function Layout({
     <html lang="en" className={cn("font-sans", figtree.variable)}>
       <body className="antialiased">
         <InvoiceProvider>{children}</InvoiceProvider>
+        <Analytics />
       </body>
     </html>
   );
