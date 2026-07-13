@@ -1,11 +1,13 @@
 import { prisma } from "../../../../../lib/prisma";
 import { auth } from "../../../../../lib/auth";
+import { ensureBusinessSettings } from "../../../../../lib/business";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { deleteInvoice } from "@/app/actions/invoice";
+import { deleteInvoice, duplicateInvoice } from "@/app/actions/invoice";
 import Link from "next/link";
 import InvoiceDocument from "@/app/components/InvoiceDocument";
 import CopyShareLink from "@/app/components/CopyShareLink";
+import BusinessProfileBanner from "@/app/components/BusinessProfileBanner";
 import { sendInvoiceEmail } from "@/app/actions/email";
 
 export default async function InvoiceDetailPage({
@@ -35,7 +37,19 @@ export default async function InvoiceDetailPage({
     notFound();
   }
 
+  const business = await ensureBusinessSettings(session.user.id);
+
   const appUrl = process.env.APP_URL;
+
+  async function duplicatePresentInvoice(formData: FormData) {
+    "use server";
+    const invoiceId = formData.get("id") as string;
+    if (!invoiceId) {
+      throw new Error("Invoice id is required");
+    }
+    const newId = await duplicateInvoice(invoiceId);
+    redirect(`/invoice/${newId}`);
+  }
 
   async function deletePresentInvoice(formData: FormData) {
     "use server";
@@ -70,6 +84,8 @@ export default async function InvoiceDetailPage({
         </div>
       )}
 
+      <BusinessProfileBanner business={business} />
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -86,6 +102,12 @@ export default async function InvoiceDetailPage({
           <Link href={`/invoice/${id}/edit`} className="btn-secondary">
             Edit
           </Link>
+          <form action={duplicatePresentInvoice}>
+            <input type="hidden" name="id" value={id} />
+            <button type="submit" className="btn-secondary">
+              Duplicate
+            </button>
+          </form>
           <a href={`/api/invoice/${id}/pdf`} className="btn-secondary">
             Download PDF
           </a>
@@ -124,6 +146,7 @@ export default async function InvoiceDetailPage({
             price: item.price,
           })),
         }}
+        business={business}
       />
 
       <div className="card mt-6">

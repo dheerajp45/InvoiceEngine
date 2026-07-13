@@ -3,7 +3,7 @@
 import { auth } from "../../../lib/auth";
 import { headers } from "next/headers";
 export  async function setAccountpassword(newPassword:string) {
-    const setPasssword =await  auth.api.setPassword({
+    await auth.api.setPassword({
         body:{
             newPassword:newPassword
         },

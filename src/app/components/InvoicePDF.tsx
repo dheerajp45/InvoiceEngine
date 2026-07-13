@@ -9,6 +9,8 @@ import {
 import {
   formatCurrency,
   formatDisplayDate,
+  hasBusinessDetails,
+  type BusinessDisplayData,
   type InvoiceDisplayData,
 } from "@/app/components/InvoiceDocument";
 
@@ -49,6 +51,15 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+  },
+  parties: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+    gap: 24,
+  },
+  party: {
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 8,
@@ -117,7 +128,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export function InvoicePDF({ invoice }: { invoice: InvoiceDisplayData }) {
+export function InvoicePDF({
+  invoice,
+  business,
+}: {
+  invoice: InvoiceDisplayData;
+  business?: BusinessDisplayData | null;
+}) {
   const subtotal = invoice.items.reduce(
     (sum, item) => sum + item.quantity * item.price,
     0
@@ -125,6 +142,8 @@ export function InvoicePDF({ invoice }: { invoice: InvoiceDisplayData }) {
   const taxAmt = subtotal * (invoice.tax / 100);
   const discountAmt = subtotal * (invoice.discount / 100);
   const total = subtotal + taxAmt - discountAmt;
+  const currency = business?.currency ?? "INR";
+  const showBusiness = hasBusinessDetails(business);
 
   return (
     <Document>
@@ -148,15 +167,31 @@ export function InvoicePDF({ invoice }: { invoice: InvoiceDisplayData }) {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bill to</Text>
-          <Text style={styles.customerName}>{invoice.customerName}</Text>
-          {invoice.customerEmail ? (
-            <Text style={styles.muted}>{invoice.customerEmail}</Text>
+        <View style={styles.parties}>
+          {showBusiness ? (
+            <View style={styles.party}>
+              <Text style={styles.sectionTitle}>From</Text>
+              {business?.businessName ? (
+                <Text style={styles.customerName}>{business.businessName}</Text>
+              ) : null}
+              {business?.address ? (
+                <Text style={styles.muted}>{business.address}</Text>
+              ) : null}
+              {business?.taxInfo ? (
+                <Text style={styles.muted}>{business.taxInfo}</Text>
+              ) : null}
+            </View>
           ) : null}
-          {invoice.customerPhone ? (
-            <Text style={styles.muted}>{invoice.customerPhone}</Text>
-          ) : null}
+          <View style={styles.party}>
+            <Text style={styles.sectionTitle}>Bill to</Text>
+            <Text style={styles.customerName}>{invoice.customerName}</Text>
+            {invoice.customerEmail ? (
+              <Text style={styles.muted}>{invoice.customerEmail}</Text>
+            ) : null}
+            {invoice.customerPhone ? (
+              <Text style={styles.muted}>{invoice.customerPhone}</Text>
+            ) : null}
+          </View>
         </View>
 
         <View>
@@ -170,9 +205,11 @@ export function InvoicePDF({ invoice }: { invoice: InvoiceDisplayData }) {
             <View key={index} style={styles.tableRow}>
               <Text style={styles.colItem}>{item.name || "—"}</Text>
               <Text style={styles.colQty}>{item.quantity}</Text>
-              <Text style={styles.colPrice}>{formatCurrency(item.price)}</Text>
+              <Text style={styles.colPrice}>
+                {formatCurrency(item.price, currency)}
+              </Text>
               <Text style={styles.colTotal}>
-                {formatCurrency(item.quantity * item.price)}
+                {formatCurrency(item.quantity * item.price, currency)}
               </Text>
             </View>
           ))}
@@ -181,19 +218,19 @@ export function InvoicePDF({ invoice }: { invoice: InvoiceDisplayData }) {
         <View style={styles.totals}>
           <View style={styles.totalRow}>
             <Text>Subtotal</Text>
-            <Text>{formatCurrency(subtotal)}</Text>
+            <Text>{formatCurrency(subtotal, currency)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text>Tax ({invoice.tax}%)</Text>
-            <Text>{formatCurrency(taxAmt)}</Text>
+            <Text>{formatCurrency(taxAmt, currency)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text>Discount ({invoice.discount}%)</Text>
-            <Text>-{formatCurrency(discountAmt)}</Text>
+            <Text>-{formatCurrency(discountAmt, currency)}</Text>
           </View>
           <View style={styles.grandTotal}>
             <Text>Total</Text>
-            <Text>{formatCurrency(total)}</Text>
+            <Text>{formatCurrency(total, currency)}</Text>
           </View>
         </View>
 
@@ -208,6 +245,9 @@ export function InvoicePDF({ invoice }: { invoice: InvoiceDisplayData }) {
   );
 }
 
-export async function renderInvoicePDF(invoice: InvoiceDisplayData) {
-  return renderToBuffer(<InvoicePDF invoice={invoice} />);
+export async function renderInvoicePDF(
+  invoice: InvoiceDisplayData,
+  business?: BusinessDisplayData | null
+) {
+  return renderToBuffer(<InvoicePDF invoice={invoice} business={business} />);
 }

@@ -1,5 +1,6 @@
 import { renderInvoicePDF } from "@/app/components/InvoicePDF";
 import { auth } from "../../../../../../lib/auth";
+import { ensureBusinessSettings } from "../../../../../../lib/business";
 import { prisma } from "../../../../../../lib/prisma";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -29,22 +30,27 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const buffer = await renderInvoicePDF({
-    invoiceName: invoice.invoiceName,
-    invoiceNumber: invoice.invoiceNumber,
-    invoiceDate: invoice.invoiceDate.toISOString(),
-    customerName: invoice.customerName,
-    customerEmail: invoice.customerEmail,
-    customerPhone: invoice.customerPhone,
-    tax: invoice.tax,
-    discount: invoice.discount,
-    note: invoice.note,
-    items: invoice.items.map((item) => ({
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-    })),
-  });
+  const business = await ensureBusinessSettings(session.user.id);
+
+  const buffer = await renderInvoicePDF(
+    {
+      invoiceName: invoice.invoiceName,
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: invoice.invoiceDate.toISOString(),
+      customerName: invoice.customerName,
+      customerEmail: invoice.customerEmail,
+      customerPhone: invoice.customerPhone,
+      tax: invoice.tax,
+      discount: invoice.discount,
+      note: invoice.note,
+      items: invoice.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    },
+    business
+  );
 
   const filename = `invoice-${invoice.invoiceNumber.replace(/[^a-zA-Z0-9-_]/g, "-")}.pdf`;
 

@@ -231,3 +231,49 @@ const updatedInvoice = await prisma.invoice.update({
 
 return updatedInvoice
 }
+
+export async function duplicateInvoice(id: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const source = await prisma.invoice.findFirst({
+    where: {
+      id,
+      userId: session.user.id,
+    },
+    include: { items: true },
+  });
+
+  if (!source) {
+    throw new Error("Invoice not found");
+  }
+
+  const copy = await prisma.invoice.create({
+    data: {
+      invoiceName: `${source.invoiceName} (Copy)`,
+      invoiceNumber: `${source.invoiceNumber}-COPY`,
+      invoiceDate: source.invoiceDate,
+      customerName: source.customerName,
+      customerEmail: source.customerEmail,
+      customerPhone: source.customerPhone,
+      tax: source.tax,
+      discount: source.discount,
+      note: source.note,
+      userId: session.user.id,
+      items: {
+        create: source.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      },
+    },
+  });
+
+  return copy.id;
+}

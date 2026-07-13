@@ -32,6 +32,20 @@ export const auth = betterAuth({
         enabled:true,
         autoSignIn:false,
         requireEmailVerification: true, 
+        sendResetPassword: async ({ user, url }) => {
+          await resend.emails.send({
+            from: process.env.EMAIL_FROM!,
+            to: user.email,
+            subject: "Reset your password — Invoice Engine",
+            html: `
+              <p>Hi ${user.name ?? "there"},</p>
+              <p>Click the link below to reset your password:</p>
+              <p><a href="${url}">Reset my password</a></p>
+              <p>If you didn't request this, you can ignore this email.</p>
+              <p>Thanks,<br/>Invoice Engine</p>
+            `,
+          });
+        }
     },
     socialProviders: {
         google: {

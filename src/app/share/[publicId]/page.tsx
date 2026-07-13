@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma";
+import { ensureBusinessSettings } from "../../../../lib/business";
 import InvoiceDocument from "@/app/components/InvoiceDocument";
 
 export default async function PublicInvoicePage({
@@ -17,6 +18,8 @@ export default async function PublicInvoicePage({
   if (!invoice) {
     notFound();
   }
+
+  const business = await ensureBusinessSettings(invoice.userId);
 
   return (
     <div className="page-shell">
@@ -54,6 +57,7 @@ export default async function PublicInvoicePage({
             price: item.price,
           })),
         }}
+        business={business}
       />
     </div>
   );

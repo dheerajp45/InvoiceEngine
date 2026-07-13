@@ -39,7 +39,7 @@ export default function SetPasswordForm(){
 try {
       await setAccountpassword( newPassword);
 
-} catch (error) {
+} catch {
     setError("Failed to change password.");
     setLoading(false);
     return;

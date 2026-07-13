@@ -12,7 +12,8 @@ export default function Header() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/signin");
+          router.push("/");
+          router.refresh();
         },
       },
     });
@@ -24,6 +25,12 @@ export default function Header() {
         <>
           <Link href="/dashboard" className="btn-ghost">
             Dashboard
+          </Link>
+          <Link href="/create" className="btn-ghost">
+            Create
+          </Link>
+          <Link href="/settings" className="btn-ghost">
+            Settings
           </Link>
           <button type="button" onClick={handleSignOut} className="btn-ghost">
             Logout

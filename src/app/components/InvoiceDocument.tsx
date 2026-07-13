@@ -17,11 +17,36 @@ export type InvoiceDisplayData = {
   items: InvoiceDisplayItem[];
 };
 
-export function formatCurrency(amount: number) {
+export type BusinessDisplayData = {
+  businessName?: string | null;
+  address?: string | null;
+  taxInfo?: string | null;
+  currency: string;
+  logoUrl?: string | null;
+};
+
+export function formatCurrency(amount: number, currency?: string | null) {
+  if (currency) {
+    try {
+      return amount.toLocaleString(undefined, {
+        style: "currency",
+        currency,
+      });
+    } catch {
+  
+    }
+  }
   return amount.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+export function hasBusinessDetails(business?: BusinessDisplayData | null) {
+  return Boolean(
+    business &&
+      (business.businessName || business.address || business.taxInfo)
+  );
 }
 
 export function formatDisplayDate(date: Date | string): string {
@@ -35,9 +60,13 @@ export function formatDisplayDate(date: Date | string): string {
 
 type InvoiceDocumentProps = {
   invoice: InvoiceDisplayData;
+  business?: BusinessDisplayData | null;
 };
 
-export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
+export default function InvoiceDocument({
+  invoice,
+  business,
+}: InvoiceDocumentProps) {
   const subtotal = invoice.items.reduce(
     (sum, item) => sum + item.quantity * item.price,
     0
@@ -45,6 +74,8 @@ export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
   const taxAmt = subtotal * (invoice.tax / 100);
   const discountAmt = subtotal * (invoice.discount / 100);
   const total = subtotal + taxAmt - discountAmt;
+  const currency = business?.currency ?? "INR";
+  const showBusiness = hasBusinessDetails(business);
 
   return (
     <article className="card overflow-hidden p-0">
@@ -72,6 +103,26 @@ export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
       </div>
 
       <div className="grid gap-8 px-6 py-8 sm:grid-cols-2 sm:px-10">
+        {showBusiness && (
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+              From
+            </h3>
+            {business?.businessName && (
+              <p className="mt-2 font-medium text-gray-900">
+                {business.businessName}
+              </p>
+            )}
+            {business?.address && (
+              <p className="mt-1 whitespace-pre-line text-sm text-gray-600">
+                {business.address}
+              </p>
+            )}
+            {business?.taxInfo && (
+              <p className="mt-1 text-sm text-gray-600">{business.taxInfo}</p>
+            )}
+          </div>
+        )}
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500">
             Bill to
@@ -110,10 +161,10 @@ export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
                   {item.quantity}
                 </td>
                 <td className="py-4 pr-4 text-right text-gray-600">
-                  {formatCurrency(item.price)}
+                  {formatCurrency(item.price, currency)}
                 </td>
                 <td className="py-4 text-right font-medium text-gray-900">
-                  {formatCurrency(item.quantity * item.price)}
+                  {formatCurrency(item.quantity * item.price, currency)}
                 </td>
               </tr>
             ))}
@@ -125,19 +176,19 @@ export default function InvoiceDocument({ invoice }: InvoiceDocumentProps) {
         <div className="w-full max-w-xs space-y-2 text-sm">
           <div className="flex justify-between text-gray-600">
             <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <span>{formatCurrency(subtotal, currency)}</span>
           </div>
           <div className="flex justify-between text-gray-600">
             <span>Tax ({invoice.tax}%)</span>
-            <span>{formatCurrency(taxAmt)}</span>
+            <span>{formatCurrency(taxAmt, currency)}</span>
           </div>
           <div className="flex justify-between text-gray-600">
             <span>Discount ({invoice.discount}%)</span>
-            <span>-{formatCurrency(discountAmt)}</span>
+            <span>-{formatCurrency(discountAmt, currency)}</span>
           </div>
           <div className="flex justify-between border-t border-gray-200 pt-3 text-base font-bold text-gray-900">
             <span>Total</span>
-            <span>{formatCurrency(total)}</span>
+            <span>{formatCurrency(total, currency)}</span>
           </div>
         </div>
       </div>

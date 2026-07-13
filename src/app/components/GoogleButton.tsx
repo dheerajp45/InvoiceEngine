@@ -1,25 +1,35 @@
+"use client";
+
+import { useState } from "react";
 import { authClient } from "../../../lib/auth-client";
+import { GoogleIcon } from "./GoogleIcon";
 
-export default function GoogleButton(){
-    return(
-        <>
-        <div className="my-4 flex items-center gap-3">
-  <div className="h-px flex-1 bg-gray-200" />
-  <span className="text-xs text-gray-500">or</span>
-  <div className="h-px flex-1 bg-gray-200" />
-</div>
+type GoogleButtonProps = {
+  callbackURL?: string;
+};
 
-<button
-  type="button"
-  className="btn-secondary w-full"
-  onClick={() =>
-    authClient.signIn.social({
+export default function GoogleButton({
+  callbackURL = "/dashboard",
+}: GoogleButtonProps) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleGoogleSignIn() {
+    setLoading(true);
+    await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
-    })
+      callbackURL,
+    });
   }
->
-  Continue with Google
-</button></>
-    )
+
+  return (
+    <button
+      type="button"
+      onClick={handleGoogleSignIn}
+      disabled={loading}
+      className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 disabled:opacity-60"
+    >
+      <GoogleIcon className="size-5 shrink-0" />
+      {loading ? "Redirecting..." : "Continue with Google"}
+    </button>
+  );
 }

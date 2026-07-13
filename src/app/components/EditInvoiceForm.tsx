@@ -240,7 +240,7 @@ export default function EditInvoiceForm({ invoice, id }: EditInvoiceFormProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="field-label" htmlFor="tax">
-                Tax (%)
+                Tax on items (%)
               </label>
               <input
                 id="tax"

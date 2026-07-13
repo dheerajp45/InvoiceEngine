@@ -1,9 +1,20 @@
 import { headers } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
-import { redirect } from "next/navigation";
-import { formatDisplayDate } from "@/app/components/InvoiceDocument";
+import { ensureBusinessSettings } from "../../../../lib/business";
+import {
+  calculateInvoiceTotal,
+  getStartOfMonth,
+} from "../../../../lib/invoice";
+import BusinessProfileBanner from "@/app/components/BusinessProfileBanner";
+import { DashboardStats } from "./components/dashboard-stats";
+import { DashboardEmptyState } from "./components/dashboard-empty-state";
+import {
+  DashboardInvoiceList,
+  type DashboardInvoiceRow,
+} from "./components/dashboard-invoice-list";
 
 export default async function DashboardPage({
   searchParams,
@@ -19,130 +30,108 @@ export default async function DashboardPage({
 
   if (!session?.user) redirect("/signin");
 
-  const invoices = await prisma.invoice.findMany({
-    where: {
-      userId: session.user.id,
-      ...(searchQuery
-        ? {
-            OR: [
-              { invoiceName: { contains: searchQuery, mode: "insensitive" } },
-              { customerName: { contains: searchQuery, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const userId = session.user.id;
+  const business = await ensureBusinessSettings(userId);
+  const currency = business.currency ?? "INR";
+  const firstName = session.user.name?.split(" ")[0] ?? "there";
+
+  const [invoices, totalCount, thisMonthCount, latestInvoice] =
+    await Promise.all([
+      prisma.invoice.findMany({
+        where: {
+          userId,
+          ...(searchQuery
+            ? {
+                OR: [
+                  { invoiceName: { contains: searchQuery, mode: "insensitive" } },
+                  { customerName: { contains: searchQuery, mode: "insensitive" } },
+                  { invoiceNumber: { contains: searchQuery, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        include: { items: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.invoice.count({ where: { userId } }),
+      prisma.invoice.count({
+        where: {
+          userId,
+          createdAt: { gte: getStartOfMonth() },
+        },
+      }),
+      prisma.invoice.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        select: { invoiceName: true },
+      }),
+    ]);
+
+  const rows: DashboardInvoiceRow[] = invoices.map((inv) => ({
+    id: inv.id,
+    invoiceName: inv.invoiceName,
+    invoiceNumber: inv.invoiceNumber,
+    customerName: inv.customerName,
+    invoiceDate: inv.invoiceDate,
+    total: calculateInvoiceTotal(inv),
+  }));
 
   return (
     <div className="page-shell">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <BusinessProfileBanner business={business} />
+
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Your invoices
+          <p className="text-sm text-gray-600">
+            Welcome back, <span className="font-medium text-gray-900">{firstName}</span>
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
+            Dashboard
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Manage and view all your saved invoices.
+            Your workspace for creating, managing, and sharing invoices.
           </p>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-          <form method="GET" className="flex w-full items-center gap-2 sm:w-auto">
-            <input
-              type="text"
-              name="q"
-              defaultValue={searchQuery}
-              placeholder="Search by invoice or customer..."
-              className="input min-w-0 flex-1 sm:w-56"
-            />
-            <button type="submit" className="btn-secondary shrink-0">
-              Search
-            </button>
-            {searchQuery ? (
-              <Link href="/dashboard" className="btn-ghost shrink-0">
-                Clear
-              </Link>
-            ) : null}
-          </form>
-          <Link href="/create" className="btn-primary shrink-0 text-center">
-            + New invoice
-          </Link>
-        </div>
+        <Link
+          href="/create"
+          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+        >
+          + New invoice
+        </Link>
       </div>
 
-      {invoices.length === 0 ? (
-        <div className="card mx-auto max-w-lg text-center">
+      <div className="mb-6">
+        <DashboardStats
+          total={totalCount}
+          thisMonth={thisMonthCount}
+          latestLabel={latestInvoice?.invoiceName ?? null}
+        />
+      </div>
+
+      <form method="GET" className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input
+          type="text"
+          name="q"
+          defaultValue={searchQuery}
+          placeholder="Search by invoice, customer, or number..."
+          className="input min-w-0 flex-1"
+        />
+        <div className="flex gap-2">
+          <button type="submit" className="btn-secondary shrink-0">
+            Search
+          </button>
           {searchQuery ? (
-            <>
-              <h2 className="text-lg font-semibold text-gray-900">
-                No results for &ldquo;{searchQuery}&rdquo;
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                Try a different search term or clear the filter.
-              </p>
-              <Link href="/dashboard" className="btn-secondary mt-6">
-                Clear search
-              </Link>
-            </>
-          ) : (
-            <>
-              <h2 className="text-lg font-semibold text-gray-900">
-                No invoices yet
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                Create your first invoice to get started.
-              </p>
-              <Link href="/create" className="btn-primary mt-6">
-                Create invoice
-              </Link>
-            </>
-          )}
+            <Link href="/dashboard" className="btn-ghost shrink-0">
+              Clear
+            </Link>
+          ) : null}
         </div>
+      </form>
+
+      {rows.length === 0 ? (
+        <DashboardEmptyState searchQuery={searchQuery || undefined} />
       ) : (
-        <div className="card overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="data-table min-w-[640px]">
-              <thead>
-                <tr>
-                  <th className="px-6 pt-6">Invoice</th>
-                  <th className="px-4 pt-6">Customer</th>
-                  <th className="px-4 pt-6">Number</th>
-                  <th className="px-4 pt-6">Date</th>
-                  <th className="px-6 pt-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className="px-6 font-medium text-gray-900">
-                      {inv.invoiceName}
-                    </td>
-                    <td className="px-4">{inv.customerName}</td>
-                    <td className="px-4 text-gray-500">{inv.invoiceNumber}</td>
-                    <td className="px-4 text-gray-500">
-                      {formatDisplayDate(inv.invoiceDate)}
-                    </td>
-                    <td className="px-6 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link
-                          href={`/invoice/${inv.id}`}
-                          className="btn-ghost text-gray-900"
-                        >
-                          View
-                        </Link>
-                        <Link
-                          href={`/invoice/${inv.id}/edit`}
-                          className="btn-ghost text-gray-900"
-                        >
-                          Edit
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DashboardInvoiceList invoices={rows} currency={currency} />
       )}
     </div>
   );
