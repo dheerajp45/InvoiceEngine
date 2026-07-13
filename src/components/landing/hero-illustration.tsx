@@ -130,7 +130,8 @@ export function HeroIllustration({ className }: HeroIllustrationProps) {
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        aria-hidden
+        role="img"
+        aria-label="Invoice Engine product preview showing invoice creation, PDF export, and sharing"
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>

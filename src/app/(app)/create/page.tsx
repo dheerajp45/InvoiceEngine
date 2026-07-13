@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "../../../../lib/auth";
 import { ensureBusinessSettings } from "../../../../lib/business";
 import BusinessProfileBanner from "@/app/components/BusinessProfileBanner";
 import CreateInvoiceForm from "./CreateInvoiceForm";
+
+export const metadata: Metadata = {
+  title: "Create Invoice",
+};
 
 export default async function CreateInvoicePage() {
   const session = await auth.api.getSession({

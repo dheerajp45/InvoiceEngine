@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -15,6 +16,10 @@ import {
   DashboardInvoiceList,
   type DashboardInvoiceRow,
 } from "./components/dashboard-invoice-list";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export default async function DashboardPage({
   searchParams,

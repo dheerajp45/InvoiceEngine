@@ -1,13 +1,54 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma";
 import { ensureBusinessSettings } from "../../../../lib/business";
 import InvoiceDocument from "@/app/components/InvoiceDocument";
+import {
+  buildCanonical,
+  buildOpenGraph,
+  buildTwitterCard,
+  siteConfig,
+} from "../../../../lib/seo";
 
-export default async function PublicInvoicePage({
-  params,
-}: {
+type PageProps = {
   params: Promise<{ publicId: string }>;
-}) {
+};
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { publicId } = await params;
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { publicId },
+    select: {
+      invoiceName: true,
+      invoiceNumber: true,
+      customerName: true,
+    },
+  });
+
+  if (!invoice) {
+    return { title: "Invoice not found" };
+  }
+
+  const title = `Invoice ${invoice.invoiceNumber}`;
+  const description = `Issued to ${invoice.customerName}. View this professional invoice on ${siteConfig.name}.`;
+  const path = `/share/${publicId}`;
+
+  return {
+    title,
+    description,
+    robots: { index: false, follow: false },
+    alternates: {
+      canonical: buildCanonical(path),
+    },
+    openGraph: buildOpenGraph({ title, description, path }),
+    twitter: buildTwitterCard({ title, description, path }),
+  };
+}
+
+export default async function PublicInvoicePage({ params }: PageProps) {
   const { publicId } = await params;
 
   const invoice = await prisma.invoice.findUnique({
@@ -22,7 +63,7 @@ export default async function PublicInvoicePage({
   const business = await ensureBusinessSettings(invoice.userId);
 
   return (
-    <div className="page-shell">
+    <main className="page-shell">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-gray-500">
@@ -59,6 +100,6 @@ export default async function PublicInvoicePage({
         }}
         business={business}
       />
-    </div>
+    </main>
   );
 }

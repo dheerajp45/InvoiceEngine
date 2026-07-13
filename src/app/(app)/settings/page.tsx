@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import ChangePasswordForm from "./components/change-password-form";
@@ -6,6 +7,10 @@ import BusinessSettingsForm from "./components/business-settings-form";
 import BusinessProfileBanner from "@/app/components/BusinessProfileBanner";
 import { auth } from "../../../../lib/auth";
 import { ensureBusinessSettings } from "../../../../lib/business";
+
+export const metadata: Metadata = {
+  title: "Settings",
+};
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({

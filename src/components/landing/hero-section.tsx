@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HeroFeaturePills } from "./hero-feature-pills";
 import { HeroIllustration } from "./hero-illustration";
-import { ArrowDownIcon, ArrowRightIcon, SparkleIcon } from "./landing-icons";
+import { ArrowRightIcon, SparkleIcon } from "./landing-icons";
 
 export function HeroSection() {
   return (
@@ -27,9 +27,9 @@ export function HeroSection() {
           </h1>
 
           <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600 sm:mt-6 sm:text-lg">
-            Create professional invoices, download polished PDFs, manage your
-            invoices, and securely share them with public links—all from one
-            modern workspace.
+            A free online invoice generator for freelancers and small businesses.
+            Create professional invoices, export PDF invoices, manage your
+            workspace, and share secure links with clients.
           </p>
 
           <div className="mt-6 sm:mt-8">
@@ -47,14 +47,16 @@ export function HeroSection() {
           <HeroIllustration className="max-w-[360px] sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-[44rem]" />
         </div>
 
-        <div className="md:col-start-1 md:row-start-2">
+        <section
+          className="md:col-start-1 md:row-start-2"
+          aria-labelledby="features-heading"
+        >
+          <h2 id="features-heading" className="sr-only">
+            Invoice Engine features
+          </h2>
           <HeroFeaturePills />
-        </div>
+        </section>
       </section>
-
-      <div className="flex justify-center pb-6 sm:pb-8">
-        <ArrowDownIcon className="size-5 text-gray-500" />
-      </div>
     </>
   );
 }

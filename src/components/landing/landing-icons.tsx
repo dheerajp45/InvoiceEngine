@@ -34,20 +34,6 @@ export function PlayCircleIcon({ className = "size-4" }: IconProps) {
   );
 }
 
-export function ArrowDownIcon({ className = "size-5" }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 5v14M6 13l6 6 6-6"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function DocumentIcon({ className = "size-3.5" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>

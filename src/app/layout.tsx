@@ -4,11 +4,35 @@ import { Figtree } from "next/font/google";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import {
+  buildOpenGraph,
+  buildTwitterCard,
+  defaultIcons,
+  getSiteUrl,
+  siteConfig,
+} from "../../lib/seo";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  icons: { icon: "/favicon.png" },
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
+  icons: defaultIcons,
+  manifest: "/manifest.webmanifest",
+  openGraph: buildOpenGraph(),
+  twitter: buildTwitterCard(),
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function Layout({

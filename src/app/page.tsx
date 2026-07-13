@@ -2,18 +2,50 @@ import type { Metadata } from "next";
 import { HeroSection } from "@/components/landing/hero-section";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { MidnightMist } from "@/components/landing/midnight-mist";
+import {
+  buildCanonical,
+  buildOpenGraph,
+  buildTwitterCard,
+  getHomeJsonLd,
+  siteConfig,
+} from "../../lib/seo";
 
 export const metadata: Metadata = {
-  title: "Invoice Engine — Invoicing, simplified.",
-  description:
-    "Create professional invoices in minutes, manage them effortlessly, and get paid faster. Built for freelancers and businesses of all sizes.",
+  title: siteConfig.title,
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
+  alternates: {
+    canonical: buildCanonical("/"),
+  },
+  openGraph: buildOpenGraph({
+    title: siteConfig.title,
+    description: siteConfig.description,
+    path: "/",
+  }),
+  twitter: buildTwitterCard({
+    title: siteConfig.title,
+    description: siteConfig.description,
+    path: "/",
+  }),
 };
 
 export default function HomePage() {
   return (
     <MidnightMist>
       <LandingNav />
-      <HeroSection />
+      <main>
+        <HeroSection />
+      </main>
+      <footer className="mx-auto w-full max-w-7xl px-6 pb-8 pt-4 text-center text-sm text-gray-500">
+        <p>
+          &copy; {new Date().getFullYear()} {siteConfig.name}. Free online
+          invoice generator for freelancers and businesses.
+        </p>
+      </footer>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(getHomeJsonLd()) }}
+      />
     </MidnightMist>
   );
 }
