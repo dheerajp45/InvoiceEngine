@@ -20,6 +20,12 @@ export const siteConfig = {
     "business invoice",
     "invoice management",
   ],
+  creator: {
+    name: "Dheeraj Panyam",
+    jobTitle: "Full-Stack Developer",
+    linkedin: "https://www.linkedin.com/in/dheerajpanyam",
+    github: "https://github.com/dheerajp45",
+  },
 } as const;
 
 export function getSiteUrl() {
@@ -109,18 +115,44 @@ export function privatePageMetadata(title: string): Metadata {
 }
 
 export function getHomeJsonLd() {
+  const { creator } = siteConfig;
+
   return {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: siteConfig.name,
-    url: getSiteUrl(),
-    description: siteConfig.description,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-    },
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        name: siteConfig.name,
+        url: getSiteUrl(),
+        description: siteConfig.description,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+        author: {
+          "@type": "Person",
+          name: creator.name,
+          url: creator.linkedin,
+          sameAs: [creator.linkedin, creator.github],
+        },
+      },
+      {
+        "@type": "Person",
+        name: creator.name,
+        jobTitle: creator.jobTitle,
+        url: creator.linkedin,
+        sameAs: [creator.linkedin, creator.github],
+        knowsAbout: [
+          "Next.js",
+          "TypeScript",
+          "PostgreSQL",
+          "Prisma",
+          "Full-Stack Development",
+        ],
+      },
+    ],
   };
 }

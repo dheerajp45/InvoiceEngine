@@ -39,6 +39,35 @@ export default function HomePage() {
           &copy; {new Date().getFullYear()} {siteConfig.name}. Free online
           invoice generator for freelancers and businesses.
         </p>
+        <p className="mt-2">
+          Built by{" "}
+          <a
+            href={siteConfig.creator.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gray-700 underline hover:text-gray-900"
+          >
+            {siteConfig.creator.name}
+          </a>
+          {" · "}
+          <a
+            href={siteConfig.creator.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-700"
+          >
+            GitHub
+          </a>
+          {" · "}
+          <a
+            href={siteConfig.creator.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-700"
+          >
+            LinkedIn
+          </a>
+        </p>
       </footer>
       <script
         type="application/ld+json"
