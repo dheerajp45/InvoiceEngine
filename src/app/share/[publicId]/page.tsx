@@ -8,6 +8,7 @@ import {
   buildOpenGraph,
   buildTwitterCard,
   siteConfig,
+  truncateOgDescription,
 } from "../../../../lib/seo";
 
 type PageProps = {
@@ -34,6 +35,9 @@ export async function generateMetadata({
 
   const title = `Invoice ${invoice.invoiceNumber}`;
   const description = `Issued to ${invoice.customerName}. View this professional invoice on ${siteConfig.name}.`;
+  const ogDescription = truncateOgDescription(
+    `Invoice ${invoice.invoiceNumber} for ${invoice.customerName}. View on Invoice Engine.`
+  );
   const path = `/share/${publicId}`;
 
   return {
@@ -43,8 +47,8 @@ export async function generateMetadata({
     alternates: {
       canonical: buildCanonical(path),
     },
-    openGraph: buildOpenGraph({ title, description, path }),
-    twitter: buildTwitterCard({ title, description, path }),
+    openGraph: buildOpenGraph({ title, description: ogDescription, path }),
+    twitter: buildTwitterCard({ title, description: ogDescription, path }),
   };
 }
 

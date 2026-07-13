@@ -5,6 +5,8 @@ export const siteConfig = {
   title: "Invoice Engine – Free & Simple Online Invoice Generator",
   description:
     "Create, manage, download and share professional invoices with Invoice Engine. Free online invoice creator with PDF export and secure share links.",
+  ogDescription:
+    "Create, manage, and share professional invoices. Free online invoice generator with PDF export.",
   tagline: "Invoicing, simplified.",
   themeColor: "#0F766E",
   icon: "/tab-icon.png",
@@ -34,6 +36,11 @@ export const defaultIcons: NonNullable<Metadata["icons"]> = {
   shortcut: ["/tab-icon.png"],
 };
 
+export function truncateOgDescription(text: string, max = 100) {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 3).trimEnd()}...`;
+}
+
 export function buildCanonical(path = "/") {
   const base = getSiteUrl();
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -49,12 +56,13 @@ type OpenGraphOptions = {
 
 export function buildOpenGraph({
   title = siteConfig.title,
-  description = siteConfig.description,
+  description = siteConfig.ogDescription,
   path = "/",
   image = siteConfig.ogImage,
 }: OpenGraphOptions = {}): Metadata["openGraph"] {
   const url = buildCanonical(path);
   const imageUrl = image.startsWith("http") ? image : buildCanonical(image);
+  const ogDescription = truncateOgDescription(description);
 
   return {
     type: "website",
@@ -62,7 +70,7 @@ export function buildOpenGraph({
     url,
     siteName: siteConfig.name,
     title,
-    description,
+    description: ogDescription,
     images: [
       {
         url: imageUrl,
@@ -79,10 +87,14 @@ export function buildTwitterCard(
 ): Metadata["twitter"] {
   const image = options.image ?? siteConfig.ogImage;
 
+  const description = truncateOgDescription(
+    options.description ?? siteConfig.ogDescription
+  );
+
   return {
     card: "summary_large_image",
     title: options.title ?? siteConfig.title,
-    description: options.description ?? siteConfig.description,
+    description,
     images: [
       image.startsWith("http") ? image : buildCanonical(image),
     ],

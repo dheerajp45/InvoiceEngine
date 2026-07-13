@@ -19,12 +19,10 @@ export const metadata: Metadata = {
   },
   openGraph: buildOpenGraph({
     title: siteConfig.title,
-    description: siteConfig.description,
     path: "/",
   }),
   twitter: buildTwitterCard({
     title: siteConfig.title,
-    description: siteConfig.description,
     path: "/",
   }),
 };
