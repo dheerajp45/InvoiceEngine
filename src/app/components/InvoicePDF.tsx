@@ -13,6 +13,7 @@ import {
   type BusinessDisplayData,
   type InvoiceDisplayData,
 } from "@/app/components/InvoiceDocument";
+import { calculateInvoiceTotals, roundMoney } from "../../../lib/invoice";
 
 const styles = StyleSheet.create({
   page: {
@@ -135,13 +136,8 @@ export function InvoicePDF({
   invoice: InvoiceDisplayData;
   business?: BusinessDisplayData | null;
 }) {
-  const subtotal = invoice.items.reduce(
-    (sum, item) => sum + item.quantity * item.price,
-    0
-  );
-  const taxAmt = subtotal * (invoice.tax / 100);
-  const discountAmt = subtotal * (invoice.discount / 100);
-  const total = subtotal + taxAmt - discountAmt;
+  const { subtotal, taxAmount: taxAmt, discountAmount: discountAmt, total } =
+    calculateInvoiceTotals(invoice);
   const currency = business?.currency ?? "INR";
   const showBusiness = hasBusinessDetails(business);
 
@@ -209,7 +205,10 @@ export function InvoicePDF({
                 {formatCurrency(item.price, currency)}
               </Text>
               <Text style={styles.colTotal}>
-                {formatCurrency(item.quantity * item.price, currency)}
+                {formatCurrency(
+                  roundMoney(item.quantity * item.price),
+                  currency
+                )}
               </Text>
             </View>
           ))}

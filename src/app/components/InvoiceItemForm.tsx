@@ -1,3 +1,5 @@
+import { roundMoney } from "../../../lib/invoice";
+
 interface Item {
   name: string;
   quantity: number;
@@ -47,7 +49,11 @@ export default function InvoiceItemForm({
           min="0"
           step="0.01"
           onChange={(e) =>
-            handleItemChange(index, "price", Number(e.target.value))
+            handleItemChange(
+              index,
+              "price",
+              roundMoney(Number(e.target.value) || 0)
+            )
           }
         />
       </div>

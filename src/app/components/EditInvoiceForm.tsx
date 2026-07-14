@@ -35,6 +35,8 @@ function formatDateForInput(date: Date | string): string {
   return d.toISOString().slice(0, 10);
 }
 
+import { roundMoney } from "../../../lib/invoice";
+
 function mapItemsToState(items: InvoiceItem[]): Item[] {
   if (items.length === 0) {
     return [{ name: "", quantity: 1, price: 0 }];
@@ -42,7 +44,7 @@ function mapItemsToState(items: InvoiceItem[]): Item[] {
   return items.map((item) => ({
     name: item.name,
     quantity: item.quantity,
-    price: item.price,
+    price: roundMoney(item.price),
   }));
 }
 

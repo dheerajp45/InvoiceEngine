@@ -1,3 +1,5 @@
+import { calculateInvoiceTotals, roundMoney } from "../../../lib/invoice";
+
 export type InvoiceDisplayItem = {
   name: string;
   quantity: number;
@@ -26,17 +28,22 @@ export type BusinessDisplayData = {
 };
 
 export function formatCurrency(amount: number, currency?: string | null) {
+  const rounded = roundMoney(amount);
+
   if (currency) {
     try {
-      return amount.toLocaleString(undefined, {
+      return rounded.toLocaleString(undefined, {
         style: "currency",
         currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       });
     } catch {
-  
+      // fall through to generic formatting
     }
   }
-  return amount.toLocaleString(undefined, {
+
+  return rounded.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -67,13 +74,8 @@ export default function InvoiceDocument({
   invoice,
   business,
 }: InvoiceDocumentProps) {
-  const subtotal = invoice.items.reduce(
-    (sum, item) => sum + item.quantity * item.price,
-    0
-  );
-  const taxAmt = subtotal * (invoice.tax / 100);
-  const discountAmt = subtotal * (invoice.discount / 100);
-  const total = subtotal + taxAmt - discountAmt;
+  const { subtotal, taxAmount: taxAmt, discountAmount: discountAmt, total } =
+    calculateInvoiceTotals(invoice);
   const currency = business?.currency ?? "INR";
   const showBusiness = hasBusinessDetails(business);
 
@@ -164,7 +166,10 @@ export default function InvoiceDocument({
                   {formatCurrency(item.price, currency)}
                 </td>
                 <td className="py-4 text-right font-medium text-gray-900">
-                  {formatCurrency(item.quantity * item.price, currency)}
+                  {formatCurrency(
+                    roundMoney(item.quantity * item.price),
+                    currency
+                  )}
                 </td>
               </tr>
             ))}

@@ -3,6 +3,7 @@
 import { headers } from "next/headers"
 import { auth } from "../../../lib/auth"
 import { prisma } from "../../../lib/prisma"
+import { roundMoney } from "../../../lib/invoice"
 
 export type CreateInvoiceInput = {
   invoiceName: string
@@ -17,6 +18,18 @@ export type CreateInvoiceInput = {
   items: { name: string; quantity: number; price: number }[]
 }
 
+function normalizeInvoiceInput(data: CreateInvoiceInput): CreateInvoiceInput {
+  return {
+    ...data,
+    tax: roundMoney(data.tax),
+    discount: roundMoney(data.discount),
+    items: data.items.map((item) => ({
+      ...item,
+      price: roundMoney(item.price),
+    })),
+  }
+}
+
 export async function createInvoice(data: CreateInvoiceInput) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -25,6 +38,9 @@ export async function createInvoice(data: CreateInvoiceInput) {
   if (!session?.user) {
     throw new Error("Unauthorized")
   }
+
+  data = normalizeInvoiceInput(data)
+
 // Invoice Name
 if (!data.invoiceName.trim()) {
     throw new Error("Invoice name is required")
@@ -151,6 +167,9 @@ export async function updateInvoice (id:string , receivedData: CreateInvoiceInpu
   if(!foundInvoice){
     throw new Error("invoice not found")
   }
+
+  receivedData = normalizeInvoiceInput(receivedData)
+
   // Invoice Name
 if (!receivedData.invoiceName.trim()) {
   throw new Error("Invoice name is required")
